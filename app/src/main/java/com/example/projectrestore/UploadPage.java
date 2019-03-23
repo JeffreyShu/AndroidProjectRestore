@@ -13,7 +13,11 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -30,8 +34,14 @@ public class UploadPage extends AppCompatActivity {
 
     private Uri uriImage;
 
-    FirebaseStorage storage;
-    StorageReference storageReference;
+    private FirebaseStorage storage;
+    private StorageReference storageReference;
+
+    private FirebaseAuth auth;
+
+    private DatabaseReference dataRef;
+
+    private String userId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +56,12 @@ public class UploadPage extends AppCompatActivity {
         storage = FirebaseStorage.getInstance();
         storageReference = storage.getReference();
 
+        auth = FirebaseAuth.getInstance();
+
+        dataRef = FirebaseDatabase.getInstance().getReference();
+
+        userId = auth.getUid();
+
         buttonChooseFileFunctionality();
         buttonUploadFunctionality();
     }
@@ -54,20 +70,29 @@ public class UploadPage extends AppCompatActivity {
         buttonUpload.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                StorageReference ref = storageReference.child("images/"+ UUID.randomUUID().toString());
-                ref.putFile(uriImage).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
-                        if (task.isSuccessful()) {
-                            Toast.makeText(UploadPage.this, "Upload successful.", Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(UploadPage.this, "Upload failed. Please try again.", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
+                Upload();
             }
         });
 
+    }
+
+    public void Upload() {
+        String imageName = UUID.randomUUID().toString();
+        StorageReference ref = storageReference.child("images/"+ userId + "/" + imageName);
+        ref.putFile(uriImage).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
+                if (task.isSuccessful()) {
+                    Toast.makeText(UploadPage.this, "Upload successful.", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(UploadPage.this, "Upload failed. Please try again.", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        ref = storageReference.child("restored_images/"+ userId + "/" + imageName);
+        ref.putFile(uriImage);
+        String downloadUrl = storageReference.child("restored_images/"+ userId + "/" + imageName).getDownloadUrl().toString();
+        dataRef.child(userId).child("restored_images_url").child(imageName).setValue(downloadUrl);
     }
 
     private void buttonChooseFileFunctionality() {

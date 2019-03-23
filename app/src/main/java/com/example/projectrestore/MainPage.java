@@ -6,6 +6,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -15,6 +16,8 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 public class MainPage extends AppCompatActivity {
     private Button buttonSignOut;
@@ -24,8 +27,12 @@ public class MainPage extends AppCompatActivity {
 
     private FirebaseAuth authentication;
     private DatabaseReference dataRef;
+    private DatabaseReference dataRefImages;
 
     private String firebaseUserId;
+
+    private FirebaseStorage storage;
+    private StorageReference storageReference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +49,9 @@ public class MainPage extends AppCompatActivity {
         FirebaseUser user = authentication.getCurrentUser();
         dataRef = FirebaseDatabase.getInstance().getReference();
 
+        storage = FirebaseStorage.getInstance();
+        storageReference = storage.getReference();
+
         firebaseUserId = authentication.getUid();
 
         textViewWelcome.setText("Welcome " + user.getEmail());
@@ -54,6 +64,22 @@ public class MainPage extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 showNameData(dataSnapshot);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
+
+        dataRefImages = dataRef.child(firebaseUserId).child("restored_images_url");
+        dataRefImages.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for (DataSnapshot postSnap : dataSnapshot.getChildren()) {
+                    String url = postSnap.getValue(String.class);
+                }
             }
 
             @Override
