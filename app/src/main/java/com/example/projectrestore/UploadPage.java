@@ -12,7 +12,9 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
@@ -29,6 +31,8 @@ public class UploadPage extends AppCompatActivity {
 
     private Button buttonChooseFile;
     private Button buttonUpload;
+    private Button buttonBack;
+    private EditText editTextEnterClassName;
     private EditText editTextEnterFileName;
     private ImageView imageViewPicture;
 
@@ -43,6 +47,8 @@ public class UploadPage extends AppCompatActivity {
 
     private String userId;
 
+    private String imageName;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,6 +56,8 @@ public class UploadPage extends AppCompatActivity {
 
         buttonChooseFile = findViewById(R.id.buttonChooseFile);
         buttonUpload = findViewById(R.id.buttonUpload);
+        buttonBack = findViewById(R.id.buttonBack);
+        editTextEnterClassName = findViewById(R.id.editTextEnterClassName);
         editTextEnterFileName = findViewById(R.id.editTextEnterFileName);
         imageViewPicture = findViewById(R.id.imageViewPicture);
 
@@ -64,6 +72,17 @@ public class UploadPage extends AppCompatActivity {
 
         buttonChooseFileFunctionality();
         buttonUploadFunctionality();
+        buttonbackFunctionality();
+    }
+
+    private void buttonbackFunctionality() {
+        buttonBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+                startActivity(new Intent(UploadPage.this, MainPage.class));
+            }
+        });
     }
 
     private void buttonUploadFunctionality() {
@@ -73,26 +92,56 @@ public class UploadPage extends AppCompatActivity {
                 Upload();
             }
         });
-
     }
 
     public void Upload() {
-        String imageName = UUID.randomUUID().toString();
-        StorageReference ref = storageReference.child("images/"+ userId + "/" + imageName);
-        ref.putFile(uriImage).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
-                if (task.isSuccessful()) {
-                    Toast.makeText(UploadPage.this, "Upload successful.", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(UploadPage.this, "Upload failed. Please try again.", Toast.LENGTH_SHORT).show();
+        final String classname = editTextEnterClassName.getText().toString();
+        final String filename = editTextEnterFileName.getText().toString();
+        if (classname.equals("") && filename.equals("")) {
+            Toast.makeText(UploadPage.this, "Please enter the class name that image will be placed under and the name of the image.", Toast.LENGTH_LONG).show();
+        } else if (classname.equals("")) {
+            Toast.makeText(UploadPage.this, "Please enter the class name that image will be placed under.", Toast.LENGTH_LONG).show();
+        } else if (filename.equals("")) {
+             Toast.makeText(UploadPage.this, "Please enter the name of the file.", Toast.LENGTH_LONG).show();
+        } else {
+            StorageReference ref_original = storageReference.child(userId + "/" + classname + "/" + filename);
+            ref_original.putFile(uriImage).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
+                    if (task.isSuccessful()) {
+                        Toast.makeText(UploadPage.this, "Upload successful.", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(UploadPage.this, "Upload failed. Please try again.", Toast.LENGTH_SHORT).show();
+                    }
                 }
-            }
-        });
-        ref = storageReference.child("restored_images/"+ userId + "/" + imageName);
-        ref.putFile(uriImage);
-        String downloadUrl = storageReference.child("restored_images/"+ userId + "/" + imageName).getDownloadUrl().toString();
-        dataRef.child(userId).child("restored_images_url").child(imageName).setValue(downloadUrl);
+            });
+
+            final StorageReference ref_restored = storageReference.child(userId + "/" + classname + "_r" + "/" + filename);
+            UploadTask uploadTask = ref_restored.putFile(uriImage);
+
+            Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+                @Override
+                public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
+                    if (!task.isSuccessful()) {
+                        throw task.getException();
+                    }
+
+                    // Continue with the task to get the download URL
+                    return ref_restored.getDownloadUrl();
+                }
+            }).addOnCompleteListener(new OnCompleteListener<Uri>() {
+                @Override
+                public void onComplete(@NonNull Task<Uri> task) {
+                    if (task.isSuccessful()) {
+                        Uri downloadUri = task.getResult();
+                        dataRef.child(userId).child(classname + "_r").child(filename).setValue(downloadUri.toString());
+                    } else {
+                        // Handle failures
+                        // ...
+                    }
+                }
+            });
+        }
     }
 
     private void buttonChooseFileFunctionality() {
@@ -120,4 +169,5 @@ public class UploadPage extends AppCompatActivity {
             imageViewPicture.setImageURI(uriImage);
         }
     }
+
 }

@@ -1,14 +1,27 @@
 package com.example.projectrestore;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.icu.text.IDNA;
+import android.net.Uri;
+import android.nfc.Tag;
+import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -19,9 +32,10 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import java.util.ArrayList;
+
 public class MainPage extends AppCompatActivity {
     private Button buttonSignOut;
-    private TextView textViewWelcome;
     private Button buttonProfile;
     private Button buttonUpload;
 
@@ -31,8 +45,8 @@ public class MainPage extends AppCompatActivity {
 
     private String firebaseUserId;
 
-    private FirebaseStorage storage;
-    private StorageReference storageReference;
+    private ArrayList<String> imageNames = new ArrayList<>();
+    private ArrayList<String> imageUrls = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,45 +55,35 @@ public class MainPage extends AppCompatActivity {
 
         authentication = FirebaseAuth.getInstance();
 
-        buttonSignOut = (Button)findViewById(R.id.buttonSignOut);
-        textViewWelcome = (TextView)findViewById(R.id.textViewWelcome);
-        buttonProfile = (Button)findViewById(R.id.buttonProfile);
-        buttonUpload = (Button)findViewById(R.id.buttonUpload);
+        buttonSignOut = findViewById(R.id.buttonSignOut);
+        buttonProfile = findViewById(R.id.buttonProfile);
+        buttonUpload = findViewById(R.id.buttonUpload);
 
         FirebaseUser user = authentication.getCurrentUser();
         dataRef = FirebaseDatabase.getInstance().getReference();
 
-        storage = FirebaseStorage.getInstance();
-        storageReference = storage.getReference();
-
         firebaseUserId = authentication.getUid();
-
-        textViewWelcome.setText("Welcome " + user.getEmail());
 
         buttonSignOutFunction();
         buttonProfileFunction();
         buttonUploadFunction();
 
-        dataRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                showNameData(dataSnapshot);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
-
-
-        dataRefImages = dataRef.child(firebaseUserId).child("restored_images_url");
+        dataRefImages = dataRef.child(firebaseUserId);
         dataRefImages.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 for (DataSnapshot postSnap : dataSnapshot.getChildren()) {
-                    String url = postSnap.getValue(String.class);
+                    // Glide.with(getApplicationContext()).load(url).into(imageView);
+                    for (DataSnapshot postpostSnap : postSnap.getChildren()) {
+                        /*
+                        String url = postpostSnap.getValue(String.class);
+                        Glide.with(getApplicationContext()).load(url).into(imageView);
+                         */
+                        imageNames.add(postpostSnap.getKey().toString());
+                        imageUrls.add(postpostSnap.getValue().toString());
+                    }
                 }
+                initRecyclerView();
             }
 
             @Override
@@ -87,6 +91,13 @@ public class MainPage extends AppCompatActivity {
 
             }
         });
+    }
+
+    private void initRecyclerView() {
+        RecyclerView recyclerView = findViewById(R.id.my_recycler_view);
+        RecyclerViewAdapter adapter = new RecyclerViewAdapter(this, imageNames, imageUrls);
+        recyclerView.setAdapter(adapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
     }
 
     private void buttonUploadFunction() {
@@ -97,13 +108,6 @@ public class MainPage extends AppCompatActivity {
                 startActivity(new Intent(MainPage.this, UploadPage.class));
             }
         });
-    }
-
-    private void showNameData(DataSnapshot dataSnapshot) {
-        if (dataSnapshot.hasChild(firebaseUserId)) {
-            String name = dataSnapshot.child(firebaseUserId).child("user profile info").getValue(UserInformation.class).getName();
-            textViewWelcome.setText("Welcome " + name);
-        }
     }
 
     private void buttonSignOutFunction() {
@@ -130,4 +134,5 @@ public class MainPage extends AppCompatActivity {
             }
         });
     }
+
 }

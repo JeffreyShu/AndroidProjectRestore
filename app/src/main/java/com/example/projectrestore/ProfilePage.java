@@ -12,7 +12,6 @@ import android.widget.Toast;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -36,11 +35,11 @@ public class ProfilePage extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile_page);
 
-        editTextUsername = (EditText)findViewById(R.id.editTextUsername);
-        editTextName = (EditText)findViewById(R.id.editTextName);
-        editTextAge = (EditText)findViewById(R.id.editTextAge);
-        buttonSave = (Button)findViewById(R.id.buttonSave);
-        buttonBack = (Button)findViewById(R.id.buttonBack);
+        editTextUsername = findViewById(R.id.editTextUsername);
+        editTextName = findViewById(R.id.editTextName);
+        editTextAge = findViewById(R.id.editTextAge);
+        buttonSave = findViewById(R.id.buttonSave);
+        buttonBack = findViewById(R.id.buttonBack);
 
         dataRefUsers = FirebaseDatabase.getInstance().getReference();
         auth = FirebaseAuth.getInstance();
@@ -49,6 +48,7 @@ public class ProfilePage extends AppCompatActivity {
 
         buttonSaveFunctionality();
         buttonBackFunctionality();
+
 
         dataRefUsers.addValueEventListener(new ValueEventListener() {
             @Override
@@ -89,7 +89,7 @@ public class ProfilePage extends AppCompatActivity {
 
         UserInformation userInfo = new UserInformation(username, name, age);
 
-        dataRefUsers.child(firebaseUserId).child("user profile info").setValue(userInfo).addOnCompleteListener(new OnCompleteListener<Void>() {
+        dataRefUsers.child(firebaseUserId).child("User_Profile_Info").setValue(userInfo).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 if (task.isSuccessful()) {
@@ -104,9 +104,11 @@ public class ProfilePage extends AppCompatActivity {
         String name = "";
         String age = "";
         if (dataSnapshot.hasChild(firebaseUserId)) {
-            username = dataSnapshot.child(firebaseUserId).child("user profile info").getValue(UserInformation.class).getUsername();
-            name = dataSnapshot.child(firebaseUserId).child("user profile info").getValue(UserInformation.class).getName();
-            age = dataSnapshot.child(firebaseUserId).child("user profile info").getValue(UserInformation.class).getAge();
+            if (dataSnapshot.child(firebaseUserId).hasChild("User_Profile_Info")) {
+                username = dataSnapshot.child(firebaseUserId).child("User_Profile_Info").getValue(UserInformation.class).getUsername();
+                name = dataSnapshot.child(firebaseUserId).child("User_Profile_Info").getValue(UserInformation.class).getName();
+                age = dataSnapshot.child(firebaseUserId).child("User_Profile_Info").getValue(UserInformation.class).getAge();
+            }
         }
         editTextUsername.setText(username);
         editTextName.setText(name);
