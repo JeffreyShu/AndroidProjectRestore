@@ -75,11 +75,7 @@ public class MainPage extends AppCompatActivity {
                 for (DataSnapshot postSnap : dataSnapshot.getChildren()) {
                     // Glide.with(getApplicationContext()).load(url).into(imageView);
                     for (DataSnapshot postpostSnap : postSnap.getChildren()) {
-                        /*
-                        String url = postpostSnap.getValue(String.class);
-                        Glide.with(getApplicationContext()).load(url).into(imageView);
-                         */
-                        imageNames.add(postpostSnap.getKey().toString());
+                        imageNames.add(postpostSnap.getKey());
                         imageUrls.add(postpostSnap.getValue().toString());
                     }
                 }

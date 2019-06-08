@@ -3,12 +3,10 @@ package com.example.projectrestore;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
-import android.text.Layout;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -42,10 +40,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     public void onBindViewHolder(@NonNull ViewHolder viewHolder, int i) {
         Log.d(TAG, "onBindViewHolder: called.");
 
-        Glide.with(context)
-                .asBitmap()
-                .load(images.get(i))
-                .into(viewHolder.image);
+        viewHolder.image.setText(images.get(i));
 
         viewHolder.text.setText(imageNames.get(i));
     }
@@ -56,7 +51,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
-        ImageView image;
+        TextView image;
         TextView text;
         RelativeLayout parentLayout;
 

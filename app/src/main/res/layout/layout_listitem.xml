@@ -5,22 +5,22 @@
     android:padding="15sp"
     android:id="@+id/parent_layout">
 
-    <ImageView
-        android:layout_width="250sp"
-        android:layout_height="250sp"
+    <TextView
         android:id="@+id/image"
+        android:layout_width="250sp"
+        android:layout_height="wrap_content"
         android:scaleType="centerCrop"
-        android:src="@mipmap/ic_launcher"/>
+        android:textSize="14sp" />
 
     <TextView
+        android:id="@+id/text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="QWERTY"
-        android:id="@+id/text"
-        android:layout_toRightOf="@+id/image"
-        android:textColor="#000"
         android:layout_centerVertical="true"
         android:layout_marginLeft="15sp"
-        android:textSize="18sp"/>
+        android:layout_toRightOf="@+id/image"
+        android:text="QWERTY"
+        android:textColor="#000"
+        android:textSize="24sp" />
 
 </RelativeLayout>
